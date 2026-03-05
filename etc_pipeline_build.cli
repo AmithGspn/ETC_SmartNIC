@@ -1,0 +1,71 @@
+; Pipeline code generation & shared object library build.
+pipeline codegen /home/ubuntu/features_extract.spec /tmp/features_extract.c
+
+pipeline codegen /home/ubuntu/categorical_classifier.spec /tmp/categorical_classifier.c
+
+pipeline codegen /home/ubuntu/messaging_classifier.spec /tmp/messaging_classifier.c
+
+pipeline codegen /home/ubuntu/multimedia_classifier.spec /tmp/multimedia_classifier.c
+
+; List of DPDK devices.
+mempool MEMPOOL0 meta 4096 pkt 9500 pool 128K cache 512 numa 0
+
+; List DPDK ethernet devices
+ethdev 0000:03:00.0 rxq 1 1024 MEMPOOL0 txq 1 1024 promiscuous on
+ethdev 0000:03:00.1 rxq 1 1024 MEMPOOL0 txq 1 1024 promiscuous on
+
+; Create Ring Buffers for Inter-Pipeline Communication
+ring RING0 size 1024 numa 0
+ring RING1 size 1024 numa 0
+ring RING2 size 1024 numa 0
+
+; List of pipelines.
+pipeline PIPELINE0 build lib /tmp/features_extract.so io /home/ubuntu/pipeline1.io numa 0
+pipeline PIPELINE1 build lib /tmp/categorical_classifier.so io /home/ubuntu/pipeline2.io numa 0
+pipeline PIPELINE2 build lib /tmp/messaging_classifier.so io /home/ubuntu/pipeline3.io numa 0
+pipeline PIPELINE3 build lib /tmp/multimedia_classifier.so io /home/ubuntu/pipeline4.io numa 0
+
+
+; Load MAT rules
+pipeline PIPELINE1 table min_diffLen_table add /home/ubuntu/rules_categorical_class_min_differential_packet_length.txt
+pipeline PIPELINE1 table min_packetLen_table add /home/ubuntu/rules_categorical_class_min_packet_length.txt
+pipeline PIPELINE1 table max_packetLen_table add /home/ubuntu/rules_categorical_class_max_packet_length.txt
+pipeline PIPELINE1 table flow_duration_table add /home/ubuntu/rules_categorical_class_flow_duration.txt
+pipeline PIPELINE1 table IAT_range_table add /home/ubuntu/rules_categorical_class_iat_range.txt
+pipeline PIPELINE1 table packet_length_range_table add /home/ubuntu/rules_categorical_class_packet_length_range.txt
+pipeline PIPELINE1 table first4sum_table add /home/ubuntu/rules_categorical_class_first4sum.txt
+pipeline PIPELINE1 table last4sum_table add /home/ubuntu/rules_categorical_class_last4sum.txt
+pipeline PIPELINE1 table code_table0 add /home/ubuntu/rules_categorical_class_code_table0.txt
+pipeline PIPELINE1 table code_table1 add /home/ubuntu/rules_categorical_class_code_table1.txt
+pipeline PIPELINE1 table code_table2 add /home/ubuntu/rules_categorical_class_code_table2.txt
+pipeline PIPELINE1 table voting_table add /home/ubuntu/rules_categorical_class_voting_table.txt
+pipeline PIPELINE1 commit
+
+pipeline PIPELINE2 table min_diffLen_table add /home/ubuntu/rules_messaging_apps_min_differential_packet_length.txt
+pipeline PIPELINE2 table max_diffLen_table add /home/ubuntu/rules_messaging_apps_max_differential_packet_length.txt
+pipeline PIPELINE2 table min_IAT_table add /home/ubuntu/rules_messaging_apps_iat_min.txt
+pipeline PIPELINE2 table max_IAT_table add /home/ubuntu/rules_messaging_apps_iat_max.txt
+pipeline PIPELINE2 table packet_length_total_table add /home/ubuntu/rules_messaging_apps_packet_length_total.txt
+pipeline PIPELINE2 table code_table0 add /home/ubuntu/rules_messaging_apps_code_table0.txt
+pipeline PIPELINE2 table code_table1 add /home/ubuntu/rules_messaging_apps_code_table1.txt
+pipeline PIPELINE2 table code_table2 add /home/ubuntu/rules_messaging_apps_code_table2.txt
+pipeline PIPELINE2 table voting_table add /home/ubuntu/rules_messaging_apps_voting_table.txt
+pipeline PIPELINE2 commit
+
+pipeline PIPELINE3 table min_packetLen_table add /home/ubuntu/rules_multimedia_apps_min_packet_length.txt
+pipeline PIPELINE3 table max_packetLen_table add /home/ubuntu/rules_multimedia_apps_max_packet_length.txt
+pipeline PIPELINE3 table flow_duration_table add /home/ubuntu/rules_multimedia_apps_flow_duration.txt
+pipeline PIPELINE3 table IAT_range_table add /home/ubuntu/rules_multimedia_apps_iat_range.txt
+pipeline PIPELINE3 table packet_length_range_table add /home/ubuntu/rules_multimedia_apps_packet_length_range.txt
+pipeline PIPELINE3 table first4sum_table add /home/ubuntu/rules_multimedia_apps_first4sum.txt
+pipeline PIPELINE3 table last4sum_table add /home/ubuntu/rules_multimedia_apps_last4sum.txt
+pipeline PIPELINE3 table code_table0 add /home/ubuntu/rules_multimedia_apps_code_table0.txt
+pipeline PIPELINE3 table code_table1 add /home/ubuntu/rules_multimedia_apps_code_table1.txt
+pipeline PIPELINE3 table voting_table add /home/ubuntu/rules_multimedia_apps_voting_table.txt
+pipeline PIPELINE3 commit
+
+; Pipelines-to-threads mapping.
+pipeline PIPELINE0 enable thread 1
+pipeline PIPELINE1 enable thread 1
+pipeline PIPELINE2 enable thread 1
+pipeline PIPELINE3 enable thread 1
