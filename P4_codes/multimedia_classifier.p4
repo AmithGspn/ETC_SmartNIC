@@ -211,8 +211,8 @@ control MainControlImpl(
         drop_packet();
     }
 
-    Register<timestamp_t, bit<16>>(MAXIMUM_REGISTER_ENTRIES) reg_ts_c_1;
-    Register<timestamp_t, bit<16>>(MAXIMUM_REGISTER_ENTRIES) reg_ts_c_2;
+    Register<timestamp_t, bit<16>>(MAXIMUM_REGISTER_ENTRIES) reg_ts_mul_1;
+    Register<timestamp_t, bit<16>>(MAXIMUM_REGISTER_ENTRIES) reg_ts_mul_2;
     Register<bit<3>, bit<16>>(MAXIMUM_REGISTER_ENTRIES) reg_key_c;
 
     Register<bit<16>, bit<16>>(65535) reg_final_class;
@@ -396,11 +396,6 @@ control MainControlImpl(
         size = 600;
     }
 
-    // Determine final class from two tree votes.
-    // Simple rule:
-    // - if both trees agree -> that class
-    // - else -> choose class0 (you can change this tie-break policy)
-
     action set_default_result() {
         meta.final_class = meta.class0;
         hdr.classification_result.ml_result = (bit<32>) meta.final_class; 
@@ -437,7 +432,7 @@ control MainControlImpl(
             meta.key = reg_key_c.read((bit<16>)hdr.extracted_features.flow_id);
             if (meta.key == 0){
                 meta.ts_1 = ((bit<64>)istd.timestamp)[31:0];
-                reg_ts_c_1.write((bit<16>) hdr.extracted_features.flow_id, meta.ts_1);
+                reg_ts_mul_1.write((bit<16>) hdr.extracted_features.flow_id, meta.ts_1);
                 meta.key = 1;
                 reg_key_c.write(hdr.extracted_features.flow_id, meta.key);
             }
@@ -477,7 +472,7 @@ control MainControlImpl(
             meta.key = reg_key_c.read((bit<16>)hdr.extracted_features.flow_id);
             if(meta.key == 1) {
                 meta.ts_2 = ((bit<64>)istd.timestamp)[31:0];
-                reg_ts_c_2.write((bit<16>) hdr.extracted_features.flow_id, meta.ts_2);
+                reg_ts_mul_2.write((bit<16>) hdr.extracted_features.flow_id, meta.ts_2);
                 meta.key = 0;
                 reg_key_c.write(hdr.extracted_features.flow_id, meta.key);
             }
@@ -494,19 +489,9 @@ control MainControlImpl(
             reg_dbg_class1.write((bit<16>) hdr.extracted_features.flow_id, (bit<8>) meta.class1);
             // reg_dbg_codeword1.write((bit<16>) hdr.extracted_features.flow_id, (bit<64>) meta.codeword1_6);
     
-            // if (hdr.tcp.isValid()) {
-            //     hdr.tcp.dstPort = hdr.extracted_features.original_dst_port;
-            // } 
+            hdr.udp.dstPort = hdr.extracted_features.original_dst_port;
 
-            // if (hdr.udp.isValid()) {
-            //     hdr.udp.dstPort = hdr.extracted_features.original_dst_port;
-            // }
-
-            // if(meta.final_class == 1) {
-            //     send_to_port((PortId_t) 0); 
-            // } else if(meta.final_class == 2) {
-            send_to_port((PortId_t) 1); 
-            // }
+            send_to_port((PortId_t) 1);
         } 
     }
 }
@@ -520,7 +505,6 @@ control MainDeparserImpl(
     apply {
         pkt.emit(hdr.ethernet);
         // pkt.emit(hdr.ipv4);
-        // pkt.emit(hdr.tcp);
         // pkt.emit(hdr.udp);
         // pkt.emit(hdr.extracted_features);
         pkt.emit(hdr.classification_result);  
@@ -533,4 +517,3 @@ PNA_NIC(
     MainControlImpl(),
     MainDeparserImpl()
 ) main;
-

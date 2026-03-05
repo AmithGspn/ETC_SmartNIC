@@ -575,10 +575,10 @@ control MainDeparserImpl(
 {
     apply {
         pkt.emit(hdr.ethernet);
-        //pkt.emit(hdr.ipv4);
-        //pkt.emit(hdr.tcp);
-        //pkt.emit(hdr.udp);
-        //pkt.emit(hdr.extracted_features);
+        pkt.emit(hdr.ipv4);
+        pkt.emit(hdr.tcp);
+        pkt.emit(hdr.udp);
+        pkt.emit(hdr.extracted_features);
         pkt.emit(hdr.classification_result);  
     }
 }

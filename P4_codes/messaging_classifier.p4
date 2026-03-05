@@ -196,8 +196,8 @@ control MainControlImpl(
         drop_packet();
     }
 
-    Register<timestamp_t, bit<16>>(MAXIMUM_REGISTER_ENTRIES) reg_ts_c_1;
-    Register<timestamp_t, bit<16>>(MAXIMUM_REGISTER_ENTRIES) reg_ts_c_2;
+    Register<timestamp_t, bit<16>>(MAXIMUM_REGISTER_ENTRIES) reg_ts_mes_1;
+    Register<timestamp_t, bit<16>>(MAXIMUM_REGISTER_ENTRIES) reg_ts_mes_2;
     Register<bit<3>, bit<16>>(MAXIMUM_REGISTER_ENTRIES) reg_key_c;
 
     Register<bit<16>, bit<16>>(65535) reg_final_class;
@@ -413,7 +413,7 @@ control MainControlImpl(
             meta.key = reg_key_c.read((bit<16>)hdr.extracted_features.flow_id);
             if (meta.key == 0){
                 meta.ts_1 = ((bit<64>)istd.timestamp)[31:0];
-                reg_ts_c_1.write((bit<16>) hdr.extracted_features.flow_id, meta.ts_1);
+                reg_ts_mes_1.write((bit<16>) hdr.extracted_features.flow_id, meta.ts_1);
                 meta.key = 1;
                 reg_key_c.write(hdr.extracted_features.flow_id, meta.key);
             }
@@ -450,7 +450,7 @@ control MainControlImpl(
             meta.key = reg_key_c.read((bit<16>)hdr.extracted_features.flow_id);
             if(meta.key == 1) {
                 meta.ts_2 = ((bit<64>)istd.timestamp)[31:0];
-                reg_ts_c_2.write((bit<16>) hdr.extracted_features.flow_id, meta.ts_2);
+                reg_ts_mes_2.write((bit<16>) hdr.extracted_features.flow_id, meta.ts_2);
                 meta.key = 0;
                 reg_key_c.write(hdr.extracted_features.flow_id, meta.key);
             }
