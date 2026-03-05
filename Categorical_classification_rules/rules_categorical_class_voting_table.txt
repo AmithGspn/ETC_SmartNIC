@@ -1,0 +1,8 @@
+match 1 1 1 priority 1 action set_final_class class_result 1
+match 1 1 2 priority 2 action set_final_class class_result 1
+match 1 2 1 priority 3 action set_final_class class_result 1
+match 1 2 2 priority 4 action set_final_class class_result 2
+match 2 1 1 priority 5 action set_final_class class_result 1
+match 2 1 2 priority 6 action set_final_class class_result 2
+match 2 2 1 priority 7 action set_final_class class_result 2
+match 2 2 2 priority 8 action set_final_class class_result 2
