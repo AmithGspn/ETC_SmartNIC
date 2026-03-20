@@ -69,10 +69,31 @@ header extracted_features_t {
     bit<16>     flow_id;
     timestamp_t last_timestamp;
     timestamp_t current_timestamp;
+
+    /* --- added: timestamps of 1st and 8th packet --- */
+    timestamp_t ts_1;
+    timestamp_t ts_2;
+
+    timestamp_t cat_ts_1;
+    timestamp_t cat_ts_2;
 }
 
 header classification_result_t {
+    bit<16> srcPort;
+    bit<16> dstPort;
+    bit<32> srcAddr;
+    bit<32> dstAddr;    
+    bit<16>     flow_id;
     inference_result_t ml_result;
+    timestamp_t ts_1;
+    timestamp_t ts_2;
+
+    timestamp_t cat_ts_1;
+    timestamp_t cat_ts_2;
+
+    timestamp_t mes_ts_1;
+    timestamp_t mes_ts_2;
+    timestamp_t flow_duration;
 }
 
 struct metadata {
@@ -459,7 +480,21 @@ control MainControlImpl(
             reg_flow_id.write((bit<16>) 0, hdr.extracted_features.flow_id);
             reg_final_class.write((bit<16>) hdr.extracted_features.flow_id, (bit<16>)meta.final_class);
         
+            hdr.classification_result.ts_1 = hdr.extracted_features.ts_1; 
+            hdr.classification_result.ts_2 = hdr.extracted_features.ts_2; 
+            hdr.classification_result.cat_ts_1 = hdr.extracted_features.cat_ts_1; 
+            hdr.classification_result.cat_ts_2 = hdr.extracted_features.cat_ts_2; 
+            hdr.classification_result.mes_ts_1 = meta.ts_1; 
+            hdr.classification_result.mes_ts_2 = meta.ts_2; 
+            hdr.classification_result.flow_duration = hdr.extracted_features.flow_duration;
+            hdr.classification_result.flow_id = hdr.extracted_features.flow_id;
+            hdr.classification_result.srcPort = hdr.tcp.srcPort;
+            hdr.classification_result.srcAddr = hdr.ipv4.srcAddr;
+            hdr.classification_result.dstAddr = hdr.ipv4.dstAddr;
+            hdr.classification_result.dstPort = hdr.extracted_features.original_dst_port;
             hdr.tcp.dstPort = hdr.extracted_features.original_dst_port;
+
+
             // hdr.extracted_features.setInvalid();
             send_to_port((PortId_t) 1); 
         } 
