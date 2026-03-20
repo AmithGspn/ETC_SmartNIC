@@ -83,6 +83,10 @@ header extracted_features_t {
     bit<16>     flow_id;
     timestamp_t last_timestamp;
     timestamp_t current_timestamp;
+
+    /* --- added: timestamps of 1st and 8th packet --- */
+    timestamp_t ts_1;
+    timestamp_t ts_2;
 }
 
 struct metadata {
@@ -491,6 +495,10 @@ control MainControl(
                 if (meta.pkt_count == 8) {
                     // Store final extracted features
                     
+                    get_iat_range();
+                    compute_packet_length_range();
+                    compute_flow_duration();
+                          
                     meta.key = reg_key.read((bit<16>)meta.flow_id);
                     if(meta.key == 1) {
                         meta.ts_2 = ((bit<64>)istd.timestamp)[31:0];
@@ -498,10 +506,6 @@ control MainControl(
                         meta.key = 0;
                         reg_key.write(meta.flow_id, meta.key);
                     }
-                    
-                    get_iat_range();
-                    compute_packet_length_range();
-                    compute_flow_duration();
 
                     hdr.extracted_features.setValid();
 
@@ -529,6 +533,10 @@ control MainControl(
                     hdr.extracted_features.last_timestamp = meta.last_timestamp;
                     hdr.extracted_features.current_timestamp = meta.current_timestamp;
 
+                    /* write first and eighth packet timestamps into the header */
+                    hdr.extracted_features.ts_1 = meta.ts_1;
+                    hdr.extracted_features.ts_2 = meta.ts_2;
+                    
                     reg_classified_flag.write(meta.flow_id, 1);
     
                     hdr.udp.dstPort = 9999;
